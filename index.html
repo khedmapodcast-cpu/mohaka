@@ -402,11 +402,25 @@ const data=[
 const list=document.getElementById("transactions");
 
 function formatDateExact(value){
-  const s=String(value||"");
-  const m=s.match(/(\\d{1,2})/);
-  const day=m?String(m[1]).padStart(2,"0"):"07";
-  return '<span class="date-exact"><bdi dir="ltr">2026</bdi>'+
-         '<span>-</span><bdi dir="rtl">يوليو</bdi>'+
+  const s=String(value||"").trim();
+  let day="";
+  let year="2026";
+  let m=s.match(/^(\d{4})-(?:يوليو|مايو)-(\d{1,2})$/);
+  if(m){
+    year=m[1];
+    day=String(m[3]).padStart(2,"0");
+  } else {
+    m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(m){
+      year=m[1];
+      day=m[3];
+    } else {
+      m=s.match(/(\d{1,2})/);
+      day=m ? String(m[1]).padStart(2,"0") : "07";
+    }
+  }
+  return '<span class="date-exact"><bdi dir="ltr">'+year+
+         '</bdi><span>-</span><bdi dir="rtl">يوليو</bdi>'+
          '<span>-</span><bdi dir="ltr">'+day+'</bdi></span>';
 }
 
