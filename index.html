@@ -29,7 +29,7 @@ button{font-family:inherit;border:0;outline:0;padding:0;background:none}
 }
 
 .status-time{
-  position:absolute;right:29px;top:22px;font-size:23px;font-weight:500;line-height:24px;
+  position:absolute;right:29px;top:30px;font-size:23px;font-weight:500;line-height:24px;
   z-index:2;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,Tahoma,sans-serif;font-variant-numeric:normal;font-feature-settings:"tnum" 1;
 }
 .status::after{
@@ -112,6 +112,9 @@ button{font-family:inherit;border:0;outline:0;padding:0;background:none}
 .details-content{
   position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:57px 44px 130px;
   scrollbar-width:none;direction:rtl;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
 }
 .details-content::-webkit-scrollbar{display:none}
 .success{
@@ -316,6 +319,29 @@ body, #screen, button, .header, .sheet, .history-content, .details-content {
 #demoGenerateIdBtn{border:1px solid #ddd;background:#f7f7f7;border-radius:8px;padding:8px;cursor:pointer;font:inherit;font-size:12px;}
 #demoToast{position:fixed;z-index:100000;left:50%;bottom:22px;transform:translateX(-50%);display:none;background:#222;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;direction:rtl;}
 @media(max-width:520px){#demoEditorOverlay{padding:10px;box-sizing:border-box;align-items:flex-start;padding-top:6vh;}#demoEditorCard{width:100%;max-width:none;max-height:88vh;padding:16px;border-radius:16px}.demo-grid{grid-template-columns:1fr}.demo-field.full{grid-column:auto}.demo-actions{position:sticky;bottom:0;padding-top:10px;background:#fff}.demo-actions button{min-height:46px}}
+
+/* ===== DETAILS LONG-PRESS EDITOR ===== */
+.success{cursor:pointer;user-select:none;touch-action:pan-y;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}
+.details-editing{touch-action:none;}
+#detailEditorOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);direction:rtl;}
+#detailEditorOverlay.show{display:flex;}
+#detailEditorCard{width:min(92vw,620px);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:20px;box-sizing:border-box;box-shadow:0 16px 50px rgba(0,0,0,.25);font-family:inherit;}
+#detailEditorCard h2{margin:0 0 6px;font-size:23px;}
+#detailEditorCard .detail-editor-note{margin:0 0 16px;color:#666;font-size:13px;line-height:1.7;}
+.detail-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.detail-editor-box{border:1px solid #e1e1e1;border-radius:14px;padding:12px;background:#fafafa;display:flex;flex-direction:column;gap:9px;}
+.detail-editor-box.full{grid-column:1/-1;}
+.detail-editor-box-title{font-size:15px;font-weight:800;margin-bottom:2px;}
+.detail-editor-field{display:flex;flex-direction:column;gap:6px;}
+.detail-editor-field label{font-size:13px;font-weight:700;}
+.detail-editor-field input,.detail-editor-field select{box-sizing:border-box;width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font:inherit;background:#fff;}
+.detail-editor-actions{display:flex;gap:10px;margin-top:16px;}
+.detail-editor-actions button{flex:1;border:0;border-radius:10px;padding:12px;font:inherit;font-weight:700;cursor:pointer;}
+#detailEditorApply{background:#ff7900;color:#fff;}
+#detailEditorCancel{background:#eee;color:#222;}
+#detailEditorToast{position:fixed;z-index:100000;left:50%;bottom:22px;transform:translateX(-50%);display:none;background:#222;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;direction:rtl;}
+@media(max-width:520px){#detailEditorOverlay{padding:10px;box-sizing:border-box;align-items:flex-start;padding-top:6vh;}#detailEditorCard{width:100%;max-width:none;max-height:88vh;padding:16px;border-radius:16px}.detail-editor-grid{grid-template-columns:1fr}.detail-editor-box.full{grid-column:auto}.detail-editor-actions{position:sticky;bottom:0;padding-top:10px;background:#fff}.detail-editor-actions button{min-height:46px}}
+
 </style>
 </head>
 <body>
@@ -354,7 +380,7 @@ body, #screen, button, .header, .sheet, .history-content, .details-content {
     </header>
     <div class="sheet">
       <div class="details-content" id="detailScroll">
-        <div class="success"></div>
+        <div class="success" id="detailSuccess" role="button" tabindex="0" aria-label="اضغط مطولًا لمدة ثانية واحدة لتعديل بيانات العملية"></div>
         <div class="detail-amount">
   <span class="amount-info"><img src="data:image/png;base64,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" alt=""></span>
   <span class="currency">جنيه</span>
@@ -433,6 +459,44 @@ body, #screen, button, .header, .sheet, .history-content, .details-content {
 </div>
 <div id="demoToast"></div>
 
+
+<div id="detailEditorOverlay" aria-hidden="true">
+  <div id="detailEditorCard" role="dialog" aria-modal="true" aria-labelledby="detailEditorTitle">
+    <h2 id="detailEditorTitle">تعديل بيانات العملية</h2>
+    <p class="detail-editor-note">اضغط حفظ بعد تعديل البيانات. التغييرات تُحفظ تلقائيًا وتظل موجودة بعد إغلاق الصفحة وفتحها مرة أخرى.</p>
+    <div class="detail-editor-grid">
+      <div class="detail-editor-box">
+        <div class="detail-editor-box-title">الراسل</div>
+        <div class="detail-editor-field"><label for="detailEditSenderName">اسم الراسل</label><input id="detailEditSenderName" type="text" placeholder="اكتب اسم الراسل"></div>
+        <div class="detail-editor-field"><label for="detailEditSenderPhone">رقم الراسل</label><input id="detailEditSenderPhone" type="text" inputmode="numeric" placeholder="اكتب رقم الراسل"></div>
+      </div>
+      <div class="detail-editor-box">
+        <div class="detail-editor-box-title">المستلم</div>
+        <div class="detail-editor-field"><label for="detailEditRecipientName">اسم المستلم</label><input id="detailEditRecipientName" type="text" placeholder="اكتب اسم المستلم"></div>
+        <div class="detail-editor-field"><label for="detailEditRecipientPhone">رقم المستلم</label><input id="detailEditRecipientPhone" type="text" inputmode="numeric" placeholder="اكتب رقم المستلم"></div>
+      </div>
+      <div class="detail-editor-box full">
+        <div class="detail-editor-box-title">المبلغ</div>
+        <div class="detail-editor-field"><label for="detailEditAmount">قيمة المبلغ</label><input id="detailEditAmount" type="number" min="0" step="0.1" placeholder="مثال: 500"></div>
+      </div>
+      <div class="detail-editor-box">
+        <div class="detail-editor-box-title">التاريخ</div>
+        <div class="detail-editor-field"><label for="detailEditDate">التاريخ</label><input id="detailEditDate" type="date"></div>
+      </div>
+      <div class="detail-editor-box">
+        <div class="detail-editor-box-title">الوقت</div>
+        <div class="detail-editor-field"><label for="detailEditTime">الوقت</label><input id="detailEditTime" type="time" step="1"></div>
+      </div>
+      <div class="detail-editor-box full">
+        <div class="detail-editor-box-title">رقم العملية</div>
+        <div class="detail-editor-field"><label for="detailEditId">رقم العملية</label><input id="detailEditId" type="text" inputmode="numeric" maxlength="20" placeholder="اكتب رقم العملية"></div>
+      </div>
+    </div>
+    <div class="detail-editor-actions"><button type="button" id="detailEditorCancel">إلغاء</button><button type="button" id="detailEditorApply">حفظ التعديلات</button></div>
+  </div>
+</div>
+<div id="detailEditorToast"></div>
+
 <script>
 const screen=document.getElementById("screen");
 function fit(){
@@ -457,8 +521,7 @@ function getEgyptClockParts(){
   let h = Number(parts.find(p => p.type === "hour")?.value || 0);
   const m = Number(parts.find(p => p.type === "minute")?.value || 0);
 
-  // Keep the display exactly one hour behind Cairo, all year round.
-  h = (h + 23) % 24;
+  // Display the real current Cairo time.
   return { h, m };
 }
 
@@ -646,15 +709,21 @@ tabs.forEach(t=>t.addEventListener("click",()=>setFilter(t.dataset.filter)));
 
 const history=document.getElementById("history");
 const details=document.getElementById("details");
+let currentTransactionIndex = 0;
 
 list.addEventListener("click",e=>{
   const card=e.target.closest(".tx");
   if(!card)return;
   const i=+card.dataset.i, x=data[i];
+  currentTransactionIndex = i;
   document.getElementById("dAmount").textContent=x.amount;
   document.getElementById("dId").textContent=x.id;
   document.getElementById("dDate").innerHTML=formatDetailsDate(x.date);
   document.getElementById("dTime").textContent=x.time;
+  if(x.senderName) document.querySelector("#details .person:nth-child(1) .person-name").textContent=x.senderName;
+  if(x.senderPhone) document.querySelector("#details .person:nth-child(1) .person-number").textContent=x.senderPhone;
+  if(x.recipientName) document.querySelector("#details .person:nth-child(2) .person-name").textContent=x.recipientName;
+  if(x.recipientPhone) document.querySelector("#details .person:nth-child(2) .person-number").textContent=x.recipientPhone;
   history.classList.add("hidden");
   details.classList.remove("hidden");
   document.getElementById("detailScroll").scrollTop=0;
@@ -786,6 +855,176 @@ document.querySelector(".share").onclick=()=>{
   overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('show'))close();});
 })();;
+
+/* ===== DETAILS LONG-PRESS EDITOR ===== */
+(function(){
+  const success = document.getElementById("detailSuccess");
+  const overlay = document.getElementById("detailEditorOverlay");
+  const senderNameInput = document.getElementById("detailEditSenderName");
+  const senderPhoneInput = document.getElementById("detailEditSenderPhone");
+  const recipientNameInput = document.getElementById("detailEditRecipientName");
+  const recipientPhoneInput = document.getElementById("detailEditRecipientPhone");
+  const amountInput = document.getElementById("detailEditAmount");
+  const dateInput = document.getElementById("detailEditDate");
+  const timeInput = document.getElementById("detailEditTime");
+  const idInput = document.getElementById("detailEditId");
+  const toast = document.getElementById("detailEditorToast");
+  let pressTimer = null;
+  let longPressTriggered = false;
+
+
+  function getCurrentRecord(){
+    if(!Array.isArray(data) || !data.length) return null;
+    if(!Number.isInteger(currentTransactionIndex) || currentTransactionIndex < 0 || currentTransactionIndex >= data.length){
+      currentTransactionIndex=0;
+    }
+    return data[currentTransactionIndex];
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function fillEditor(){
+    const x=getCurrentRecord();
+    if(!x) return;
+    const d=parseDateValue(x.date) || {year:"2026",month:monthNames[7],day:"20"};
+    const parts=String(x.time||"12:00:00").split(":");
+    const monthIndex=Math.max(0,monthNames.indexOf(d.month));
+    const isoDate=`${String(d.year).padStart(4,"0")}-${String(monthIndex+1).padStart(2,"0")}-${String(Number(d.day)).padStart(2,"0")}`;
+    const isoTime=`${pad2(Number(parts[0])||0)}:${pad2(Number(parts[1])||0)}:${pad2(Number(parts[2])||0)}`;
+    senderNameInput.value=x.senderName || document.querySelector("#details .person:nth-child(1) .person-name")?.textContent.trim() || "";
+    senderPhoneInput.value=x.senderPhone || document.querySelector("#details .person:nth-child(1) .person-number")?.textContent.trim() || "";
+    recipientNameInput.value=x.recipientName || document.querySelector("#details .person:nth-child(2) .person-name")?.textContent.trim() || "";
+    recipientPhoneInput.value=x.recipientPhone || document.querySelector("#details .person:nth-child(2) .person-number")?.textContent.trim() || "";
+    amountInput.value=String(x.amount||"");
+    dateInput.value=isoDate;
+    timeInput.value=isoTime;
+    idInput.value=String(x.id||"");
+  }
+
+  function openEditor(){
+    fillEditor();
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden","false");
+  }
+
+  function closeEditor(){
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden","true");
+  }
+
+  function msg(text){
+    toast.textContent=text;
+    toast.style.display="block";
+    clearTimeout(msg.t);
+    msg.t=setTimeout(()=>toast.style.display="none",1800);
+  }
+
+  function startPress(e){
+    if(e.type==="mousedown" && e.button!==0) return;
+    e.preventDefault();
+    try{ if(e.pointerId != null) success.setPointerCapture(e.pointerId); }catch(_){}
+    longPressTriggered=false;
+    success.classList.add("details-editing");
+    pressTimer=setTimeout(()=>{
+      pressTimer=null;
+      longPressTriggered=true;
+      openEditor();
+    },1000);
+  }
+
+  function cancelPress(){
+    if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; }
+    success.classList.remove("details-editing");
+  }
+
+  // Reliable long-press for mouse, touch and pen.
+  success.addEventListener("pointerdown",e=>{
+    if(e.pointerType === "mouse" && e.button !== 0) return;
+    startPress(e);
+  });
+  success.addEventListener("pointerup",cancelPress);
+  success.addEventListener("pointercancel",cancelPress);
+  success.addEventListener("pointerleave",e=>{
+    if(e.pointerType === "mouse") cancelPress();
+  });
+  success.addEventListener("contextmenu",e=>e.preventDefault());
+  success.addEventListener("click",e=>{
+    if(longPressTriggered){ e.preventDefault(); e.stopPropagation(); longPressTriggered=false; }
+  });
+  success.addEventListener("keydown",e=>{
+    if(e.key==="Enter" || e.key===" "){ e.preventDefault(); }
+  });
+
+  document.getElementById("detailEditorCancel").addEventListener("click",closeEditor);
+  overlay.addEventListener("click",e=>{ if(e.target===overlay) closeEditor(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && overlay.classList.contains("show")) closeEditor(); });
+
+  document.getElementById("detailEditorApply").addEventListener("click",()=>{
+    const x=getCurrentRecord();
+    if(!x) return;
+
+    // كل الحقول اختيارية: لو لم تغيّر خانة، تظل بياناتها كما هي.
+    const amountText=String(amountInput.value||"").trim();
+    if(amountText!==""){
+      const amount=Number(amountText);
+      if(!Number.isFinite(amount)||amount<0){ msg("المبلغ غير صحيح"); return; }
+      x.amount=Number.isInteger(amount) ? `${amount}.0` : amount.toFixed(1);
+    }
+
+    const dateText=String(dateInput.value||"").trim();
+    if(dateText!==""){
+      const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
+      if(!dm){ msg("التاريخ غير صحيح"); return; }
+      const y=Number(dm[1]), m=Number(dm[2])-1, d=Number(dm[3]);
+      const anchor=new Date(y,m,d,12,0,0);
+      if(!Number.isInteger(y)||y<2000||y>2100||anchor.getFullYear()!==y||anchor.getMonth()!==m||anchor.getDate()!==d){ msg("التاريخ غير صحيح"); return; }
+      x.date=`${y}-${monthNames[m]}-${d}`;
+    }
+
+    const timeText=String(timeInput.value||"").trim();
+    if(timeText!==""){
+      const tm=/^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(timeText);
+      if(!tm){ msg("الوقت غير صحيح"); return; }
+      const hh=Number(tm[1]), mm=Number(tm[2]), ss=Number(tm[3]||0);
+      if(hh>23||mm>59||ss>59){ msg("الوقت غير صحيح"); return; }
+      x.time=`${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+    }
+
+    const senderName=String(senderNameInput.value||"").trim();
+    const senderPhone=String(senderPhoneInput.value||"").trim();
+    const recipientName=String(recipientNameInput.value||"").trim();
+    const recipientPhone=String(recipientPhoneInput.value||"").trim();
+    const operationId=String(idInput.value||"").trim();
+    if(senderName!=="") x.senderName=senderName;
+    if(senderPhone!=="") x.senderPhone=senderPhone;
+    if(recipientName!=="") x.recipientName=recipientName;
+    if(recipientPhone!=="") x.recipientPhone=recipientPhone;
+    if(operationId!=="") x.id=operationId;
+
+    document.getElementById("dAmount").textContent=x.amount;
+    document.getElementById("dId").textContent=x.id;
+    document.getElementById("dDate").innerHTML=formatDetailsDate(x.date);
+    document.getElementById("dTime").textContent=x.time;
+    const senderNameEl=document.querySelector("#details .person:nth-child(1) .person-name");
+    const senderPhoneEl=document.querySelector("#details .person:nth-child(1) .person-number");
+    const recipientNameEl=document.querySelector("#details .person:nth-child(2) .person-name");
+    const recipientPhoneEl=document.querySelector("#details .person:nth-child(2) .person-number");
+    if(senderNameEl) senderNameEl.textContent=x.senderName;
+    if(senderPhoneEl) senderPhoneEl.textContent=x.senderPhone;
+    if(recipientNameEl) recipientNameEl.textContent=x.recipientName;
+    if(recipientPhoneEl) recipientPhoneEl.textContent=x.recipientPhone;
+
+    try{
+      localStorage.setItem(TX_STORE_KEY,JSON.stringify(data));
+      localStorage.setItem(DEMO_PERMANENT_STATE_V3,JSON.stringify(data));
+    }catch(e){}
+    draw();
+    closeEditor();
+    msg("تم حفظ تعديلات العملية");
+  });
+})();
+
+
 </script>
 </body>
 </html>
